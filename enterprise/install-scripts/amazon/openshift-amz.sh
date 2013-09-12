@@ -1560,6 +1560,8 @@ configure_access_keys_on_broker()
   # the broker.
   openssl genrsa -out /etc/openshift/server_priv.pem 2048
   openssl rsa -in /etc/openshift/server_priv.pem -pubout > /etc/openshift/server_pub.pem
+  chown apache:apache /etc/openshift/server_pub.pem
+  chmod 640 /etc/openshift/server_pub.pem
 
   # If a key pair already exists, delete it so that the ssh-keygen
   # command will not have to ask the user what to do.
@@ -1567,7 +1569,7 @@ configure_access_keys_on_broker()
 
   # Generate a key pair for moving gears between nodes from the broker
   ssh-keygen -t rsa -b 2048 -P "" -f /root/.ssh/rsync_id_rsa
-  cp ~/.ssh/rsync_id_rsa* /etc/openshift/
+  cp /root/.ssh/rsync_id_rsa* /etc/openshift/
   # the .pub key needs to go on nodes, but there is no good way
   # to script that generically. Nodes should not have password-less 
   # access to brokers to copy the .pub key, but this can be performed
@@ -1695,18 +1697,12 @@ configure_console_msg()
 
 ########################################################################
 
-#
-# Parse the kernel command-line, define variables with the parameters
-# specified on it, and define functions broker() and node(), which
-# return true or false as appropriate based on whether we are
-# configuring the host as a broker or as a node.
-#
-
-# Parse /proc/cmdline so that from, e.g., "foo=bar baz" we get
-# CONF_FOO=bar and CONF_BAZ=true in the environment.
-parse_cmdline()
+# Given a list of arguments, define variables with the parameters
+# specified on it so that from, e.g., "foo=bar baz" we get CONF_FOO=bar
+# and CONF_BAZ=true in the environment.
+parse_args()
 {
-  for word in $(cat /proc/cmdline)
+  for word in "$@"
   do
     key="${word%%\=*}"
     case "$word" in
@@ -1715,6 +1711,18 @@ parse_cmdline()
     esac
     eval "CONF_${key^^}"'="$val"'
   done
+}
+
+# Parse the kernel command-line using parse_args.
+parse_kernel_cmdline()
+{
+  parse_args $(cat /proc/cmdline)
+}
+
+# Parse command-line arguments using parse_args.
+parse_cmdline()
+{
+  parse_args "$@"
 }
 
 is_true()
@@ -1780,6 +1788,7 @@ is_false()
 #
 # The following variables will be defined:
 #
+#   actions
 #   activemq_hostname
 #   bind_key		# if bind_krb_keytab and bind_krb_principal unset
 #   bind_krb_keytab
@@ -1794,13 +1803,14 @@ is_false()
 #   node_hostname
 #   repos_base
 #
-# This function makes use of variables that may be set by parse_cmdline
+# This function makes use of variables that may be set by parse_kernel_cmdline
 # based on the content of /proc/cmdline or may be hardcoded by modifying
 # this file.  All of these variables are optional; best attempts are
 # made at determining reasonable defaults.
 #
 # The following variables are used:
 #
+#   CONF_ACTIONS
 #   CONF_ACTIVEMQ_HOSTNAME
 #   CONF_BIND_KEY
 #   CONF_BROKER_HOSTNAME
@@ -1816,6 +1826,10 @@ is_false()
 #   CONF_REPOS_BASE
 set_defaults()
 {
+  # By default, we run configure_all, which performs all the steps of
+  # a normal installation.
+  actions="${CONF_ACTIONS:-configure_all}"
+
   # Following are the different components that can be installed:
   components='broker node named activemq datastore'
 
@@ -1980,128 +1994,106 @@ set_defaults()
 
 ########################################################################
 
-# Note: parse_cmdline is only needed for kickstart and not if this %post
+configure_all()
+{
+  echo_installation_intentions
+#  configure_console_msg
+
+  is_false "$CONF_NO_NTP" && synchronize_clock
+
+
+  # enable subscriptions / repositories according to requested method
+  configure_repos
+
+  # Install yum-plugin-priorities
+  yum clean all
+  echo "Installing yum-plugin-priorities; if something goes wrong here, check your install source."
+  yum install -y yum-plugin-priorities || exit 1
+
+  yum update -y
+
+  # Note: configure_named must run before configure_controller if we are
+  # installing both named and broker on the same host.
+  named && configure_named
+
+#  update_resolv_conf
+
+  configure_network
+#  configure_hostname
+
+  datastore && configure_datastore
+
+  #broker && configure_qpid
+  activemq && configure_activemq
+
+  #broker && configure_mcollective_for_qpid_on_broker
+  broker && configure_mcollective_for_activemq_on_broker
+
+  #node && configure_mcollective_for_qpid_on_node
+  node && configure_mcollective_for_activemq_on_node
+
+  broker && install_broker_pkgs
+  node && install_node_pkgs
+  node && install_cartridges
+  node && remove_abrt_addon_python
+  broker && install_rhc_pkg
+
+  broker && enable_services_on_broker
+  node && enable_services_on_node
+
+  node && configure_pam_on_node
+  node && configure_cgroups_on_node
+  node && configure_quotas_on_node
+
+  broker && configure_selinux_policy_on_broker
+  node && configure_selinux_policy_on_node
+
+  node && configure_sysctl_on_node
+  node && configure_sshd_on_node
+
+  broker && configure_controller
+  broker && configure_remote_user_auth_plugin
+  broker && configure_access_keys_on_broker
+  #broker && configure_mongo_auth_plugin
+  broker && configure_messaging_plugin
+  broker && configure_dns_plugin
+  broker && configure_httpd_auth
+  broker && configure_broker_ssl_cert
+
+  node && configure_port_proxy
+  node && configure_gears
+  node && configure_node
+  node && configure_wildcard_ssl_cert_on_node
+  node && update_openshift_facts_on_node
+
+  node && broker && fix_broker_routing
+
+  echo "Installation and configuration is complete;"
+  echo "please reboot to start all services properly."
+}
+
+########################################################################
+
+# parse_kernel_cmdline is only needed for kickstart and not if this %post
 # section is extracted and executed on a running system.
-parse_cmdline
+#parse_kernel_cmdline
+
+# parse_cmdline is only needed for shell scripts generated by extracting
+# this %post section.
+parse_cmdline "$@"
 
 set_defaults
 
-echo_installation_intentions
-#configure_console_msg
+for action in ${actions//,/ }
+do
+  if ! [ "$(type -t "$action")" = function ]
+  then
+    echo "Invalid action: ${action}"
+    exit 1
+  fi
+  "$action"
+done
 
-is_false "$CONF_NO_NTP" && synchronize_clock
-
-
-# enable subscriptions / repositories according to requested method
-configure_repos
-
-# Install yum-plugin-priorities
-yum clean all
-echo "Installing yum-plugin-priorities; if something goes wrong here, check your install source."
-yum install -y yum-plugin-priorities || exit 1
-
-yum update -y
-
-# Note: configure_named must run before configure_controller if we are
-# installing both named and broker on the same host.
-named && configure_named
-
-#update_resolv_conf
-
-configure_network
-#configure_hostname
-
-datastore && configure_datastore
-
-#broker && configure_qpid
-activemq && configure_activemq
-
-#broker && configure_mcollective_for_qpid_on_broker
-broker && configure_mcollective_for_activemq_on_broker
-
-#node && configure_mcollective_for_qpid_on_node
-node && configure_mcollective_for_activemq_on_node
-
-broker && install_broker_pkgs
-node && install_node_pkgs
-node && install_cartridges
-node && remove_abrt_addon_python
-broker && install_rhc_pkg
-
-broker && enable_services_on_broker
-node && enable_services_on_node
-
-node && configure_pam_on_node
-node && configure_cgroups_on_node
-node && configure_quotas_on_node
-
-broker && configure_selinux_policy_on_broker
-node && configure_selinux_policy_on_node
-
-node && configure_sysctl_on_node
-node && configure_sshd_on_node
-
-broker && configure_controller
-broker && configure_remote_user_auth_plugin
-broker && configure_access_keys_on_broker
-#broker && configure_mongo_auth_plugin
-broker && configure_messaging_plugin
-broker && configure_dns_plugin
-broker && configure_httpd_auth
-broker && configure_broker_ssl_cert
-
-node && configure_port_proxy
-node && configure_gears
-node && configure_node
-node && configure_wildcard_ssl_cert_on_node
-node && update_openshift_facts_on_node
-
-node && broker && fix_broker_routing
-
-echo "Installation and configuration is complete;"
-echo "please reboot to start all services properly."
-
-
-# Configure an authorized key to provide the broker access
-configure_authorized_key()
-{
-cat <<EOF >> /root/.ssh/authorized_keys
-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDj4ywobxQXlb4ey+2NufOh9+W2BH5NS9a4+D4X7AaKSrgMfTr8P2YFsioFOXXcpjKZrC3HLb6T8ZBxbO5mnTfl9SVv9/gAZZulxXWH/+1P0OLmZQ6u/D0GK4zosRS278Benm6FgiRZSrJZlo+h4Lf4HxAogdiwCDVJs44HnwMWuEjgkOgI0RyQ7txdaZDrwqn8vZ1yh+9bW0HlJWm374lyoNbCJzTH0IQQCLMEnb7QsWzD7lgaNpnKoZeJjQFi0HDGluJt/P9NjyJg3pqnMrGOCkxPU1zT90s0yCGkSUQ1xTJciBQOdffSQj7BAKGSqZxpM2iH8fZUPrpnUxQaXTRh
-EOF
-}
-
-# Configure the private key on the broker to have named access
-configure_private_key()
-{
-cat <<EOF > /root/.ssh/named_rsa
------BEGIN RSA PRIVATE KEY-----
-MIIEpQIBAAKCAQEA4+MsKG8UF5W+HsvtjbnzoffltgR+TUvWuPg+F+wGikq4DH06
-/D9mBbIqBTl13KYymawtxy2+k/GQcWzuZp035fUlb/f4AGWbpcV1h//tT9Di5mUO
-rvw9BiuM6LEUtu/AXp5uhYIkWUqyWZaPoeC3+B8QKIHYsAg1SbOOB58DFrhI4JDo
-CNEckO7cXWmQ68Kp/L2dcofvW1tB5SVpt++JcqDWwic0x9CEEAizBJ2+0LFsw+5Y
-GjaZyqGXiY0BYtBwxpbibfz/TY8iYN6apzKxjgpMT1Nc0/dLNMghpElENcUyXIgU
-DnX30kI+wQChkqmcaTNoh/H2VD66Z1MUGl00YQIDAQABAoIBAQCkAAz7XFUdVApq
-p1/iKvyGh5ytDTbH8dgpbZ1iId3jEDq74jPc7NNDLiDHeb60eHbZ2Oto+Ca62ZGV
-z0sSVfqwZ2f12IKF5pnJBv26Thg+5JkmLXwPuj9AfX7+xtGdhZTvgx0Ov8Xg7LzF
-dHERkmNTESfTvv5uULnovGtuWKUkZ0d1OJRY4uRFtilEawzeDcs6VCBUSxAKdTgI
-p+wH3h2+IOqdMCle7mKt/k3pHDvjVkity3JE1G++m117C5ndUUEoizl9jHzVB0O+
-sQaHVLDYZjeLmLS6mHv3EuAK86ZKiZ+kwRehnTnZnrj4tp8l3bZaFLa+thZdCI/E
-QD7LoGCxAoGBAPYj8809V/w7mHZ9S7nDcKxvDbQU/Cm3tBW8JVCvFOBPnJbTUaGA
-+lKM0Mob2lai6LyvG4RnqpZorQua4Ikb4H5kEti6I0MuVDadOCxLIi6iVSgjX185
-hKsvszLEOHXf8BiqkOYbzUCXLdznMVlATNvyzAinJnOyrdaTGziXybfzAoGBAO0E
-C1NHtdjVjWB/rCb2f+zKooBNIqo7K6oC6y+YDScgjHw2255w+uCG1sBgiKwHj1kE
-lSp/mN0Af03eKshB1wIz5i83PNW2KvV1a2QWkf9ojbw6oPFGZWOOSGpycjJpzrSS
-ai7d5fHsVDi7eyEsXNDVht+WjxTXSTdOIMiI8StbAoGBAKfIxi6HvGxiK4HJ007j
-3PCOGydAjsvZP9b5E+62CmMFodZmYmTXSMvw1XqQFfusvT2xl+5fxDcXT65zes+7
-wwIlMXuvFs56zEkWTu5SoRBs8+OSiTaePMN8lojqnRos9ru5uWBCX13CMC8/IbKX
-VE0yascTOfDwQfPc/1dKkOTlAoGBAJxxgPA1cyhuvOSnIQCO0B2CGwTI5Uqrx8Ru
-LMK7gGMFLvWGWCwast2k4vcUQOIcE1hUmAj3M/UcMOs6685G9x5zF0qvES6XEX/3
-Qy1LYI7Pek51/GmFZ8Lw1Ye9hvcTs+aohgHtYavvrB/OUBWzbIhDiMToYgUFnUQu
-A6GaEmXlAoGAJEJ7t+7joQ9TeIoSWlifTWz63biX5B2QLLQeI7ObAjrdj3iDo4De
-UAhplvCUbVcZ3aVFYbofhd6Fyh7eR2RdPD/uWcsWeDkaO1lRXLrvTEgvlpFD//SU
-EWGodSkqrF8f+Gdj1c7fZdc4XRygiOs/596K118fkehXXYtqs3JyXGs=
------END RSA PRIVATE KEY-----
-EOF
 
 chmod 600 /root/.ssh/named_rsa
 }
@@ -2147,22 +2139,9 @@ configure_libra_server()
   echo "export LIBRA_SERVER='${broker_hostname}'" >> /root/.bashrc
 }
 
-# This configures an authorized key to allow the broker to be
-# able to obtain the DNS key
-named && configure_authorized_key
-
 # This fixes the BIND configuration on the named server by
 # setting up the public IP address instead of 127.0.0.1
 named && configure_named_amz
-
-# If named was installed on this host, then have the DNSSEC key still
-# that we used when configuring named.  Otherwise, we must grab the key
-# from the host running named, copy it here (onto the broker), and
-# re-run the DNS plug-in configuration on the broker once we have that
-# key so that the broker can perform updates.
-broker && configure_private_key
-broker && ! named && set_dns_key
-broker && configure_dns_plugin
 
 # This will keep you from getting SSH warnings if you
 # are running the client on the broker
