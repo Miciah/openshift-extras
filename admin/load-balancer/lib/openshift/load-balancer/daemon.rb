@@ -171,8 +171,6 @@ module OpenShift
     def create_application app_name, namespace
       pool_name = generate_pool_name app_name, namespace
 
-      raise StandardError.new "Creating application #{app_name} for which a pool already exists" if @lb_controller.pools.include? pool_name
-
       monitor_name = generate_monitor_name app_name, namespace
       if @lb_controller.monitors.include? monitor_name
         @logger.info "Using existing monitor: #{monitor_name}"
@@ -195,8 +193,6 @@ module OpenShift
 
     def delete_application app_name, namespace
       pool_name = generate_pool_name app_name, namespace
-
-      raise StandardError.new "Deleting application #{app_name} for which no pool exists" unless @lb_controller.pools.include? pool_name
 
       begin
         route_name = generate_route_name app_name, namespace
