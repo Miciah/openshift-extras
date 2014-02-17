@@ -95,11 +95,39 @@ module OpenShift
       #@logger.info "Found #{@lb_controller.pools.length} pools:\n" +
       #             @lb_controller.pools.map{|k,v|"  #{k} (#{v.members.length} members)"}.join("\n")
 
-      @logger.info "Connecting to #{@host}:#{@port} as user #{@user}..."
-      @aq = Stomp::Connection.open @user, @password, @host, @port, true
+      client_id = Socket.gethostname + '-' + $$.to_s
+      client_hdrs = {
+        # We need STOMP 1.1 to be able to nack, and STOMP 1.1 needs the
+        # client-id and host headers.
+        "accept-version" => "1.1",
+        "client-id" => client_id,
+        "client_id" => client_id,
+        "clientID" => client_id,
+        "host" => @host
+      }
+
+      client_hash = {
+        :hosts => [{
+          :login => @user,
+          :passcode => @password,
+          :host => @host,
+          :port => @port
+        }],
+        :connect_headers => client_hdrs
+      }
+
+      @logger.info "Connecting to ActiveMQ..."
+      @aq = Stomp::Connection.new client_hash
+
+      @uuid = @aq.uuid()
+
+      subscription_hash = {
+        'id' => @uuid,
+        'ack' => 'client-individual',
+      }
 
       @logger.info "Subscribing to #{@destination}..."
-      @aq.subscribe @destination, { :ack => 'client' }
+      @aq.subscribe @destination, subscription_hash
 
       @last_update = Time.now
     end
@@ -110,12 +138,32 @@ module OpenShift
         begin
           msg = nil
           Timeout::timeout(@update_interval) { msg = @aq.receive }
-          @logger.debug ['Received message:', '#v+', msg.body, '#v-'].join "\n"
-          handle YAML.load(msg.body)
-          @aq.ack msg.headers['message-id']
-          update if Time.now - @last_update >= @update_interval
+          next unless msg
+
+          msgid = msg.headers['message-id']
+          unless msgid
+            @logger.warn ["Got message without message-id from ActiveMQ:",
+                          '#v+', msg, '#v-'].join "\n"
+            next
+          end
+
+          @logger.debug ["Received message #{msgid}:", '#v+', msg.body, '#v-'].join "\n"
+
+          begin
+            handle YAML.load(msg.body)
+          rescue Psych::SyntaxError => e
+            @logger.warn "Got exception while parsing message from ActiveMQ: #{e.message}"
+            # Acknowledge it to get it out of the queue.
+            @aq.ack msgid, {'subscription' => @uuid}
+          rescue LBControllerException, LBModelException
+            @logger.info 'Got exception while handling message; sending NACK to ActiveMQ.'
+            @aq.nack msgid, {'subscription' => @uuid}
+          else
+            @aq.ack msgid, {'subscription' => @uuid}
+          end
         rescue Timeout::Error => e
-          update
+        ensure
+          update if Time.now - @last_update >= @update_interval
         end
       end
     end
