@@ -1,4 +1,5 @@
 require 'openshift/load-balancer/models/load_balancer'
+require 'f5-icontrol'
 
 module OpenShift
 
