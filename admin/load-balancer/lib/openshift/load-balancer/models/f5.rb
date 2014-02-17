@@ -54,9 +54,9 @@ module OpenShift
     def create_routes pool_names, routes
       route_names, paths = routes.transpose
       @bigip['LocalLB.ProfileHttpClass'].create route_names.map {|name| "/Common/#{name}"}
-      @bigip['LocalLB.ProfileHttpClass'].add_path_match_pattern route_names.map {|name| "/Common/#{name}"}, paths.map {|path| [{:pattern=>"#{path}(|/.*)$", :is_glob=>false}]}
+      @bigip['LocalLB.ProfileHttpClass'].add_path_match_pattern route_names.map {|name| "/Common/#{name}"}, paths.map {|path| [{:pattern=>"#{path}(/|$)", :is_glob=>false}]}
       @bigip['LocalLB.ProfileHttpClass'].set_pool_name route_names.map {|name| "/Common/#{name}"}, pool_names.map{|name| {:value=>"/Common/#{name}", :default_flag=>false}}
-      @bigip['LocalLB.ProfileHttpClass'].set_rewrite_url route_names.map {|name| "/Common/#{name}"}, paths.map{|path| {:value=>"[string map { \"#{path}\" \"/\" } [HTTP::uri]]", :default_flag=>false}}
+      @bigip['LocalLB.ProfileHttpClass'].set_rewrite_url route_names.map {|name| "/Common/#{name}"}, paths.map{|path| {:value=>"[regsub {^#{path}(/|$)} [HTTP::uri] /]", :default_flag=>false}}
     end
 
     def attach_routes route_names, virtual_server_names
