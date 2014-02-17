@@ -167,7 +167,7 @@ module OpenShift
           else
             @aq.ack msgid, {'subscription' => @uuid}
           end
-        rescue Timeout::Error => e
+        rescue Timeout::Error
         ensure
           update if Time.now - @last_update >= @update_interval
         end
