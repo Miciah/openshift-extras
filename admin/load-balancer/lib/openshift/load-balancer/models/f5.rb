@@ -15,6 +15,7 @@ module OpenShift
     end
 
     def create_pools pool_names, monitor_names
+      @bigip['System.Session'].start_transaction
       @bigip['LocalLB.Pool'].create pool_names.map {|pool| "/Common/#{pool}"}, ['LB_METHOD_ROUND_ROBIN'], []
       @bigip['LocalLB.Pool'].set_monitor_association pool_names.zip(monitor_names).map { |pool,monitor|
         if monitor
@@ -37,6 +38,7 @@ module OpenShift
           }
         end
       }
+      @bigip['System.Session'].submit_transaction
     end
 
     def delete_pools pool_names
@@ -53,10 +55,12 @@ module OpenShift
 
     def create_routes pool_names, routes
       route_names, paths = routes.transpose
+      @bigip['System.Session'].start_transaction
       @bigip['LocalLB.ProfileHttpClass'].create route_names.map {|name| "/Common/#{name}"}
       @bigip['LocalLB.ProfileHttpClass'].add_path_match_pattern route_names.map {|name| "/Common/#{name}"}, paths.map {|path| [{:pattern=>"#{path}(/|$)", :is_glob=>false}]}
       @bigip['LocalLB.ProfileHttpClass'].set_pool_name route_names.map {|name| "/Common/#{name}"}, pool_names.map{|name| {:value=>"/Common/#{name}", :default_flag=>false}}
       @bigip['LocalLB.ProfileHttpClass'].set_rewrite_url route_names.map {|name| "/Common/#{name}"}, paths.map{|path| {:value=>"[regsub {^#{path}(/|$)} [HTTP::uri] /]", :default_flag=>false}}
+      @bigip['System.Session'].submit_transaction
     end
 
     def attach_routes route_names, virtual_server_names
@@ -78,8 +82,10 @@ module OpenShift
 
     def create_monitor monitor_name, path, up_code, type, interval, timeout
       type = type == 'https-ecv' ? 'https' : 'http'
+      @bigip['System.Session'].start_transaction
       @bigip['LocalLB.Monitor'].create_template [{:template_name=>monitor_name, :template_type=>'TTYPE_HTTP'}], [{:parent_template=>type, :interval=>Integer(interval), :timeout=>timeout, :dest_ipport=>{:address_type=>'ATYPE_STAR_ADDRESS_STAR_PORT', :ipport=>{:address=>'0.0.0.0', :port=>0}}, :is_read_only=>false, :is_directly_usable=>true}]
       @bigip['LocalLB.Monitor'].set_template_string_property [monitor_name, monitor_name], [{:type=>'STYPE_SEND', :value=>"GET #{path}\\r\\n"}, {:type=>'STYPE_RECEIVE', :value=>up_code}]
+      @bigip['System.Session'].submit_transaction
     end
 
     def delete_monitor monitor_name
