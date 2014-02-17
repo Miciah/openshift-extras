@@ -42,12 +42,12 @@ module OpenShift
       # pass an instance of @lb_model_class to an instance of
       # @lb_controller_class.
       case cfg['LOAD_BALANCER'].downcase
-      when 'f5'
-        require 'openshift/load-balancer/controllers/f5'
+      when 'f5_batched'
+        require 'openshift/load-balancer/controllers/f5_batched'
         require 'openshift/load-balancer/models/f5'
 
         @lb_model_class = OpenShift::F5LoadBalancerModel
-        @lb_controller_class = OpenShift::F5LoadBalancerController
+        @lb_controller_class = OpenShift::F5BatchedLoadBalancerController
       when 'lbaas'
         require 'openshift/load-balancer/models/lbaas'
         require 'openshift/load-balancer/controllers/lbaas'

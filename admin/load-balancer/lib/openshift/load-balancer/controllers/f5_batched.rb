@@ -12,7 +12,7 @@ module OpenShift
   # F5 BIG-IP node for the configured pools and builds a table of Pool
   # objects.
   #
-  class F5LoadBalancerController < LoadBalancerController
+  class F5BatchedLoadBalancerController < LoadBalancerController
 
     # == F5 Pool object
     #
