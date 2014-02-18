@@ -251,7 +251,7 @@ module OpenShift
         @logger.info "Deleting routing rule: #{route_name}"
         @lb_controller.delete_route pool_name, route_name
       ensure
-        @logger.info "Deleting empty pool: #{pool_name}"
+        @logger.info "Deleting pool: #{pool_name}"
         @lb_controller.delete_pool pool_name
 
         # Check that the monitor is specific to the application (as indicated by
