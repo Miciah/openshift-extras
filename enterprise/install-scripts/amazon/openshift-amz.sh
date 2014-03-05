@@ -2443,6 +2443,36 @@ configure_openshift()
   echo "OpenShift: Completed configuring OpenShift."
 }
 
+restart_services()
+{
+  echo "OpenShift: Begin starting services."
+  node && service cgconfig start
+  service network restart
+  node && service openshift-iptables-port-proxy start
+  named && service named start
+  node && service messagebus start
+  node && service ruby193-mcollective start
+  node && service cgred start
+  { node || broker; } && service sshd restart
+  service ntpd start
+  activemq && service activemq start
+  { node || broker; } && service httpd start
+  broker && service openshift-broker start
+  broker && service openshift-console start
+  node && service openshift-node-web-proxy start
+  datastore && service mongod start
+  node && service openshift-gears start
+  node && service oddjobd start
+  echo "OpenShift: Completed starting services."
+}
+
+run_diagnostics()
+{
+  echo "OpenShift: Begin running oo-diagnostics."
+  oo-diagnostics -v
+  echo "OpenShift: Completed running oo-diagnostics."
+}
+
 reboot_after()
 {
   echo "OpenShift: Rebooting after install."
@@ -2460,9 +2490,12 @@ do_all_actions()
   install_rpms
   configure_host
   configure_openshift
-  echo "Installation and configuration is complete;"
-  echo "please reboot to start all services properly."
-  echo "Then validate brokers/nodes with oo-diagnostics."
+  #echo "Installation and configuration is complete;"
+  #echo "please reboot to start all services properly."
+  #echo "Then validate brokers/nodes with oo-diagnostics."
+  restart_services
+  run_diagnostics
+  echo 'Installation and configuration complete.'
 }
 
 ########################################################################
