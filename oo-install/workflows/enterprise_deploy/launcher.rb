@@ -213,7 +213,7 @@ def run_on_host(host, step)
     }
   else
     puts "Copying deployment scripts to target #{host['ssh_host']}.\n"
-    bail = proc do |output|
+    bail = Proc.new do |output|
       localfile.delete # ensure it's gone before bailing
       return {
         :success => false,
