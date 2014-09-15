@@ -34,7 +34,7 @@ The F5 module requires some rubygems that are not shipped with RHEL.  Follow the
 following steps to install the required rubygems:
 
 1. Download the f5-icontrol gem from
-   https://devcentral.f5.com/internal-forums/aft/1179247
+   https://devcentral.f5.com/labs/Ruby/
 
 2. Unzip f5-icontrol-10.2.0.2.zip.
 
