@@ -30,35 +30,20 @@ controller.
 Using F5 BIG-IP LTM
 -------------------
 
-The F5 module requires some rubygems that are not shipped with RHEL.  Follow the
-following steps to install the required rubygems:
-
-1. Download the f5-icontrol gem from
-   https://devcentral.f5.com/labs/Ruby/
-
-2. Unzip f5-icontrol-10.2.0.2.zip.
-
-3. Run the following command:
-   scl enable ruby193 'gem install soap4r-ruby1.9'
-
-4. Run the following command:
-   scl enable ruby193 'gem install f5-icontrol-10.2.0.2.gem'
-
-After enabling the F5 module as described in the section on configuring the
-daemon, edit /etc/openshift/load-balancer.conf to set the appropriate values
-for BIGIP_HOST, BIGIP_USERNAME, BIGIP_PASSWORD, and BIGIP_MONITOR to match your
-F5 BIG-IP LTM configuration.
+Edit /etc/openshift/load-balancer.conf to set the appropriate values for
+BIGIP_HOST, BIGIP_USERNAME, BIGIP_PASSWORD, and BIGIP_MONITOR to match
+your F5 BIG-IP LTM configuration.
 
 F5 BIG-IP must be configured with a virtual server that has been assigned at
-least one VIP.  The daemon will automatically create pools and associated HTTP
-class profiles, add these profiles to the virtual server, add members to the
-pools, delete members from the pools, and delete empty pools and unused profiles
-when appropriate.  Your virtual server must be named "ose-vlan." The daemon will
-name the pools after applications following the template
-"/Common/ose-#{app_name}-#{namespace}" and create HTTP class profiles that
+least one VIP.  The daemon will automatically create pools and associated
+local-traffic policy rules, add these profiles to the virtual server, add
+members to the pools, delete members from the pools, and delete empty pools and
+unused policy rules when appropriate.  Your virtual server must be named
+"ose-vlan." The daemon will name the pools after applications following the
+template "/Common/ose-#{app_name}-#{namespace}" and create policy rules that
 redirect "/#{app_name}" to pools comprising the gears of the named application.
-The HTTP class profiles bypass applications' HAProxy instances and instead route
-to the gears via the node's port-proxy.
+The policy rules bypass applications' HAProxy instances and instead route to the
+gears via the node's port-proxy.
 
 Using LBaaS
 -----------

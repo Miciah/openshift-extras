@@ -44,15 +44,15 @@ module OpenShift
       case cfg['LOAD_BALANCER'].downcase
       when 'f5'
         require 'openshift/load-balancer/controllers/f5'
-        require 'openshift/load-balancer/models/f5-icontrol-soap'
+        require 'openshift/load-balancer/models/f5-icontrol-rest'
 
-        @lb_model_class = OpenShift::F5IControlSoapLoadBalancerModel
+        @lb_model_class = OpenShift::F5IControlRestLoadBalancerModel
         @lb_controller_class = OpenShift::F5LoadBalancerController
       when 'f5_batched'
         require 'openshift/load-balancer/controllers/f5_batched'
-        require 'openshift/load-balancer/models/f5-icontrol-soap'
+        require 'openshift/load-balancer/models/f5-icontrol-rest'
 
-        @lb_model_class = OpenShift::F5IControlSoapLoadBalancerModel
+        @lb_model_class = OpenShift::F5IControlRestLoadBalancerModel
         @lb_controller_class = OpenShift::F5BatchedLoadBalancerController
       when 'lbaas'
         require 'openshift/load-balancer/models/lbaas'

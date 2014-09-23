@@ -44,15 +44,15 @@ class LazyLBController
       @lb_model_class = OpenShift::LBaaSLoadBalancerModel
     when 'f5'
       require 'openshift/load-balancer/controllers/f5'
-      require 'openshift/load-balancer/models/f5-icontrol-soap'
+      require 'openshift/load-balancer/models/f5-icontrol-rest'
 
       @lb_controller_class = OpenShift::F5LoadBalancerController
-      @lb_model_class = OpenShift::F5IControlSoapLoadBalancerModel
+      @lb_model_class = OpenShift::F5IControlRestLoadBalancerModel
     when 'f5_batched'
       require 'openshift/load-balancer/controllers/f5_batched'
-      require 'openshift/load-balancer/models/f5-icontrol-soap'
+      require 'openshift/load-balancer/models/f5-icontrol-rest'
 
-      @lb_model_class = OpenShift::F5IControlSoapLoadBalancerModel
+      @lb_model_class = OpenShift::F5IControlRestLoadBalancerModel
       @lb_controller_class = OpenShift::F5BatchedLoadBalancerController
     when 'dummy'
       require 'openshift/load-balancer/models/dummy'
