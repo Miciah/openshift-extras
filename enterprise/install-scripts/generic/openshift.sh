@@ -1871,12 +1871,18 @@ configure_datastore_add_replicants()
     echo 'rs.initiate()'
   )" '"ok" : 1' || abort_install "OpenShift: Failed to form MongoDB replica set; please do this manually."
 
+  master_out=$(echo 'print(while (rs.isMaster().primary == null) { sleep(5); }; "host="+rs.isMaster().primary)' | mongo | grep 'host=')
+  if [ $? == 0 ]
+  then
+    abort_install "OpenShift: Failed to query the MongoDB replica set master; please verify the replica set configuration manually."
+  fi
+
   configure_datastore_add_users
 
   # Configure the replica set.
   for replicant in ${datastore_replicants//,/ }
   do
-    if [[ ! "$replicant" =~ "$datastore_hostname" ]]
+    if [[ ! "$replicant" =~ "${master_out#host=}" ]]
     then
       # verify connectivity to $replicant before attempting to add it to the replica set
       # looks like we can rely on attempt to use mongo shell to connect, even if not
