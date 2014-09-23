@@ -10,9 +10,10 @@ Configuring the Daemon
 ----------------------
 
 The daemon must be configured to connect to ActiveMQ. Edit
-/etc/openshift/load-balancer.conf and set ACTIVEMQ_USER, ACTIVEMQ_PASSWORD,
-ACTIVEMQ_HOST, and ACTIVEMQ_TOPIC to the appropriate credentials, address, and
-ActiveMQ topic.
+/etc/openshift/load-balancer.conf and set ACTIVEMQ_USER,
+ACTIVEMQ_PASSWORD, ACTIVEMQ_HOST, and ACTIVEMQ_DESTINATION to the
+appropriate credentials, address, and ActiveMQ destination (topic or
+queue).
 
 Exactly one load-balancer module must be enabled.  A module for F5 BIG-IP LTM
 and a module for an load-balancer implementing the LBaaS REST API are included

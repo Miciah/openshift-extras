@@ -23,7 +23,7 @@ module OpenShift
       @password = cfg['ACTIVEMQ_PASSWORD'] || 'routinginfopasswd'
       @host = cfg['ACTIVEMQ_HOST'] || 'activemq.example.com'
       @port = (cfg['ACTIVEMQ_PORT'] || 61613).to_i
-      @destination = cfg['ACTIVEMQ_TOPIC'] || '/topic/routinginfo'
+      @destination = cfg['ACTIVEMQ_DESTINATION'] || cfg['ACTIVEMQ_TOPIC'] || '/topic/routinginfo'
       @pool_name_format = cfg['POOL_NAME'] || 'pool_ose_%a_%n_80'
       @route_name_format = cfg['ROUTE_NAME'] || 'irule_ose_%a_%n'
       @monitor_name_format = cfg['MONITOR_NAME']
