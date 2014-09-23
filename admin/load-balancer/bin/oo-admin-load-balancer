@@ -154,7 +154,11 @@ argvs.each do |argv|
       puts "Listing pool members for pool #{argv[0]}."
       pool_name = argv[0]
       members = lb.pools[pool_name].members
-      puts "Pool #{pool_name} has #{members.count} members:\n" + members.map {|m| "  "+m+"\n"}.join
+      if members.count > 0
+        puts "Pool #{pool_name} has #{members.count} members:\n" + members.map {|m| "  "+m+"\n"}.join
+      else
+        puts "Pool #{pool_name} has 0 members.\n"
+      end
 
     when 'add-pool-member'
       raise ArgumentError.new "Requires a name and host:port." unless 2 == argv.length
