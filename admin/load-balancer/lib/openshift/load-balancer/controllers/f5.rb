@@ -39,8 +39,8 @@ module OpenShift
       end
     end
 
-    def read_config
-      cfg = ParseConfig.new('/etc/openshift/load-balancer.conf')
+    def read_config cfgfile
+      cfg = ParseConfig.new(cfgfile)
 
       @bigip_host = cfg['BIGIP_HOST'] || '127.0.0.1'
       @bigip_username = cfg['BIGIP_USERNAME'] || 'admin'
@@ -129,13 +129,13 @@ module OpenShift
       end
     end
 
-    def initialize lb_model_class, logger
-      read_config
+    def initialize lb_model_class, logger, cfgfile
+      read_config cfgfile
 
       @logger = logger
 
       @logger.info "Connecting to F5 BIG-IP at host #{@bigip_host}..."
-      @lb_model = lb_model_class.new @bigip_host, @bigip_username, @bigip_password, @logger
+      @lb_model = lb_model_class.new @bigip_host, @bigip_username, @bigip_password, @logger, cfgfile
       @lb_model.authenticate @bigip_host, @bigip_username, @bigip_password
     end
   end

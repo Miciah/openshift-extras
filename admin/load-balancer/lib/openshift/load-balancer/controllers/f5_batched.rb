@@ -53,8 +53,8 @@ module OpenShift
 
     attr_reader :pending_add_member_ops, :pending_delete_member_ops
 
-    def read_config
-      cfg = ParseConfig.new('/etc/openshift/load-balancer.conf')
+    def read_config cfgfile
+      cfg = ParseConfig.new(cfgfile)
 
       @bigip_host = cfg['BIGIP_HOST'] || '127.0.0.1'
       @bigip_username = cfg['BIGIP_USERNAME'] || 'admin'
@@ -126,13 +126,13 @@ module OpenShift
       @pending_delete_member_ops = []
     end
 
-    def initialize lb_model_class, logger
-      read_config
+    def initialize lb_model_class, logger, cfgfile
+      read_config cfgfile
 
       @logger = logger
 
       @logger.info "Connecting to F5 BIG-IP at host #{@bigip_host}..."
-      @lb_model = lb_model_class.new @bigip_host, @bigip_username, @bigip_password, @logger
+      @lb_model = lb_model_class.new @bigip_host, @bigip_username, @bigip_password, @logger, cfgfile
       @lb_model.authenticate @bigip_host, @bigip_username, @bigip_password
 
       @pools = Hash[@lb_model.get_pool_names.map {|pool_name| [pool_name, Pool.new(self, @lb_model, pool_name)]}]

@@ -312,7 +312,7 @@ module OpenShift
       @keystone_token
     end
 
-    def initialize host, tenant, timeout, open_timeout, logger
+    def initialize host, tenant, timeout, open_timeout, logger, cfgfile
       @host, @tenant, @timeout, @open_timeout, @logger = host, tenant, timeout, open_timeout, logger
     end
 

@@ -101,7 +101,7 @@ module OpenShift
       @foo = "some temporary token or connection object"
     end
 
-    def initialize host, user, passwd, logger
+    def initialize host, user, passwd, logger, cfgfile
       @host, @user, @passwd, @logger = host, user, passwd, logger
       @logger.debug "do initialization stuff"
     end

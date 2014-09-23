@@ -146,8 +146,8 @@ module OpenShift
     def authenticate host=@host, user=@user, passwd=@passwd
     end
 
-    def initialize host=nil, user=nil, passwd=nil
-      @host, @user, @passwd = host, user, passwd
+    def initialize host=nil, user=nil, passwd=nil, cfgfile=nil
+      @host, @user, @passwd, @cfgfile = host, user, passwd, cfgfile
     end
 
   end

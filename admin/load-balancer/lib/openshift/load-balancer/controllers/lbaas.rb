@@ -144,8 +144,8 @@ module OpenShift
 
     attr_reader :ops # [Operation]
 
-    def read_config
-      cfg = ParseConfig.new('/etc/openshift/load-balancer.conf')
+    def read_config cfgfile
+      cfg = ParseConfig.new(cfgfile)
 
       @lbaas_host = cfg['LBAAS_HOST'] || '127.0.0.1'
       @lbaas_tenant = cfg['LBAAS_TENANT'] || 'openshift'
@@ -490,12 +490,12 @@ module OpenShift
       end
     end
 
-    def initialize lb_model_class, logger
-      read_config
+    def initialize lb_model_class, logger, cfgfile
+      read_config cfgfile
 
       @logger = logger
 
-      @lb_model = lb_model_class.new @lbaas_host, @lbaas_tenant, @lbaas_timeout.to_i, @lbaas_open_timeout.to_i, @logger
+      @lb_model = lb_model_class.new @lbaas_host, @lbaas_tenant, @lbaas_timeout.to_i, @lbaas_open_timeout.to_i, @logger, cfgfile
 
       @logger.info "Authenticating with keystone at host #{@lbaas_keystone_host}..."
       @lb_model.authenticate @lbaas_keystone_host, @lbaas_keystone_username, @lbaas_keystone_password, @lbaas_keystone_tenant

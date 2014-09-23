@@ -16,8 +16,8 @@ module OpenShift
   # OpenShift::LoadBalancerController object.
   #
   class LoadBalancerConfigurationDaemon
-    def read_config
-      cfg = ParseConfig.new('/etc/openshift/load-balancer.conf')
+    def read_config cfgfile
+      cfg = ParseConfig.new(cfgfile)
 
       @user = cfg['ACTIVEMQ_USER'] || 'routinginfo'
       @password = cfg['ACTIVEMQ_PASSWORD'] || 'routinginfopasswd'
@@ -77,8 +77,8 @@ module OpenShift
       end
     end
 
-    def initialize
-      read_config
+    def initialize cfgfile='/etc/openshift/load-balancer.conf'
+      read_config cfgfile
 
       @logger = Logger.new @logfile
       @logger.level = case @loglevel
@@ -97,7 +97,7 @@ module OpenShift
                       end
 
       @logger.info "Initializing load-balancer controller..."
-      @lb_controller = @lb_controller_class.new @lb_model_class, @logger
+      @lb_controller = @lb_controller_class.new @lb_model_class, @logger, cfgfile
       #@logger.info "Found #{@lb_controller.pools.length} pools:\n" +
       #             @lb_controller.pools.map{|k,v|"  #{k} (#{v.members.length} members)"}.join("\n")
 

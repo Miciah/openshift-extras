@@ -23,7 +23,7 @@ require 'parseconfig'
 # times if we never use it and exactly one time if we do use it.
 class LazyLBController
   def method_missing m, *args, &block
-    @lb_controller ||= @lb_controller_class.new @lb_model_class, Logger.new(STDOUT)
+    @lb_controller ||= @lb_controller_class.new @lb_model_class, Logger.new(STDOUT), $cfgfile
     @lb_controller.send m, *args, &block
   end
 
@@ -33,7 +33,7 @@ class LazyLBController
   end
 
   def initialize
-    cfg = ParseConfig.new('/etc/openshift/load-balancer.conf')
+    cfg = ParseConfig.new($cfgfile)
 
     case cfg['LOAD_BALANCER']
     when 'lbaas'
@@ -61,9 +61,15 @@ class LazyLBController
       @lb_model_class = OpenShift::DummyLoadBalancerModel
       @lb_controller_class = OpenShift::AsyncLoadBalancerController
     else
-      raise StandardError.new 'No valid setting for LOAD_BALANCER was found in /etc/openshift/load-balancer.conf'
+      raise StandardError.new "No valid setting for LOAD_BALANCER was found in #{$cfgfile}"
     end
   end
+end
+
+$cfgfile = '/etc/openshift/load-balancer.conf'
+if (pos = ARGV.find_index('--config'))
+  ARGV.delete_at(pos)
+  $cfgfile = ARGV.delete_at(pos)
 end
 
 lb = LazyLBController.new
