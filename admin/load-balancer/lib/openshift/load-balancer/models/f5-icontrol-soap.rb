@@ -8,7 +8,7 @@ module OpenShift
   # Presents direct access to an F5 BIG-IP LTM load balancer using the
   # iControl SOAP interface.
   #
-  class F5LoadBalancerModel < LoadBalancerModel
+  class F5IControlSoapLoadBalancerModel < LoadBalancerModel
 
     def get_pool_names
       @bigip['LocalLB.Pool'].get_list.map {|pool| pool[8..-1]}
