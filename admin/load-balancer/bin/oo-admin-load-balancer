@@ -174,7 +174,7 @@ argvs.each do |argv|
 
     when 'add-pool-member'
       raise ArgumentError.new "Requires a name and host:port." unless 2 == argv.length
-      puts "Adding pool member #{argv[0]} for pool #{argv[1]}."
+      puts "Adding pool member #{argv[1]} for pool #{argv[0]}."
       lb.pools[argv[0]].add_member *argv[1].split(':')
 
     when 'delete-pool-member'
