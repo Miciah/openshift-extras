@@ -72,6 +72,7 @@ module OpenShift
     # Push pending pool add_member and delete_member operations to the
     # load balancer.
     def update
+      @lb_model.update if defined?(@lb_model) && @lb_model.respond_to?(:update)
     end
   end
 
