@@ -64,7 +64,7 @@ module OpenShift
     end
 
     def create_pool pool_name, monitor_name=nil
-      raise LBControllerException.new "Pool already exists: #{pool_name}" if @pools.include? pool_name
+      raise LBControllerException.new "Pool already exists: #{pool_name}" if pools.include? pool_name
 
       @lb_model.create_pools [pool_name], [monitor_name]
 
@@ -72,7 +72,7 @@ module OpenShift
     end
 
     def delete_pool pool_name
-      raise LBControllerException.new "Pool not found: #{pool_name}" unless @pools.include? pool_name
+      raise LBControllerException.new "Pool not found: #{pool_name}" unless pools.include? pool_name
 
       update # in case we have pending delete operations for the pool.
 
@@ -82,7 +82,7 @@ module OpenShift
     end
 
     def create_route pool_name, profile_name, profile_path
-      raise LBControllerException.new "Profile already exists: #{profile_name}" if @routes.include? profile_name
+      raise LBControllerException.new "Profile already exists: #{profile_name}" if routes.include? profile_name
 
       @lb_model.create_route pool_name, profile_name, profile_path
       @lb_model.attach_route profile_name, @virtual_server_name if @virtual_server_name
@@ -92,17 +92,17 @@ module OpenShift
     end
 
     def delete_route pool_name, route_name
-      raise LBControllerException.new "Profile not found: #{route_name}" unless @routes.include? route_name
+      raise LBControllerException.new "Profile not found: #{route_name}" unless routes.include? route_name
 
       @lb_model.detach_route route_name, @virtual_server_name if @virtual_server_name
-      @lb_model.delete_route pool_name, route_name if @active_routes.include? route_name
+      @lb_model.delete_route pool_name, route_name if active_routes.include? route_name
 
       @routes.delete route_name
       @active_routes.delete route_name
     end
 
     def create_monitor monitor_name, path, up_code, type, interval, timeout
-      raise LBControllerException.new "Monitor already exists: #{monitor_name}" if @monitors.include? monitor_name
+      raise LBControllerException.new "Monitor already exists: #{monitor_name}" if monitors.include? monitor_name
 
       @lb_model.create_monitor monitor_name, path, up_code, type, interval, timeout
 
@@ -110,9 +110,9 @@ module OpenShift
     end
 
     def delete_monitor monitor_name, pool_name=nil
-      raise LBControllerException.new "Monitor not found: #{monitor_name}" unless @monitors.include? monitor_name
+      raise LBControllerException.new "Monitor not found: #{monitor_name}" unless monitors.include? monitor_name
 
-      @lb_model.delete_monitor monitor_name if @monitors.include? monitor_name
+      @lb_model.delete_monitor monitor_name if monitors.include? monitor_name
 
       @monitors.delete monitor_name
     end
