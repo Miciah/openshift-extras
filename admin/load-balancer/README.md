@@ -15,11 +15,11 @@ ACTIVEMQ_PASSWORD, ACTIVEMQ_HOST, and ACTIVEMQ_DESTINATION to the
 appropriate credentials, address, and ActiveMQ destination (topic or
 queue).
 
-Exactly one load-balancer module must be enabled.  A module for F5 BIG-IP LTM
-and a module for an load-balancer implementing the LBaaS REST API are included
-in this repository.  Edit /etc/openshift/load-balancer.conf to either "f5" or
-"lbaas" and then following the appropriate module-specific configuration
-described below.
+Exactly one load-balancer module must be enabled.  A module for F5 BIG-IP LTM,
+a module for an load-balancer implementing the LBaaS REST API, and a module that
+configures nginx as a reverse proxy are included in this repository.  Edit
+/etc/openshift/load-balancer.conf to either "f5" or "lbaas" and then following
+the appropriate module-specific configuration described below.
 
 For testing purposes, a dummy model, which merely prints actions that
 a normal model performs rather than performing actions itself, is also
@@ -55,6 +55,17 @@ the appropriate values for LBAAS_HOST, LBAAS_TENANT, LBAAS_TIMEOUT,
 LBAAS_OPEN_TIMEOUT, LBAAS_KEYSTONE_HOST, LBAAS_KEYSTONE_USERNAME,
 LBAAS_KEYSTONE_PASSWORD, and LBAAS_KEYSTONE_TENANT, to match your LBaaS
 configuration.
+
+Using nginx
+-----------
+
+Edit `/etc/openshift/load-balancer.conf` to set the appropriate values for
+`NGINX_CONFDIR` and `NGINX_SERVICE`.
+
+The daemon will automatically create and manage `server.conf` and `pool_*.conf`
+files under the directory specified by `NGINX_CONFDIR`.  After each update, the
+daemon will reload the service specified by `NGINX_SERVICE`.
+
 
 Pool and Route Names
 --------------------

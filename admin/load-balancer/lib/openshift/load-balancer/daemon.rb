@@ -42,6 +42,12 @@ module OpenShift
       # pass an instance of @lb_model_class to an instance of
       # @lb_controller_class.
       case cfg['LOAD_BALANCER'].downcase
+      when 'nginx'
+        require 'openshift/load-balancer/controllers/f5'
+        require 'openshift/load-balancer/models/nginx'
+
+        @lb_model_class = OpenShift::NginxLoadBalancerModel
+        @lb_controller_class = OpenShift::F5LoadBalancerController
       when 'f5'
         require 'openshift/load-balancer/controllers/f5'
         require 'openshift/load-balancer/models/f5-icontrol-rest'

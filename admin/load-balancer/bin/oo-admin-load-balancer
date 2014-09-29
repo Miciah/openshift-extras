@@ -42,6 +42,12 @@ class LazyLBController
 
       @lb_controller_class = OpenShift::AsyncLoadBalancerController
       @lb_model_class = OpenShift::LBaaSLoadBalancerModel
+    when 'nginx'
+      require 'openshift/load-balancer/controllers/f5'
+      require 'openshift/load-balancer/models/nginx'
+
+      @lb_controller_class = OpenShift::F5LoadBalancerController
+      @lb_model_class = OpenShift::NginxLoadBalancerModel
     when 'f5'
       require 'openshift/load-balancer/controllers/f5'
       require 'openshift/load-balancer/models/f5-icontrol-rest'
