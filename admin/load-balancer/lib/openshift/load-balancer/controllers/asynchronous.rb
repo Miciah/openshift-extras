@@ -391,7 +391,7 @@ module OpenShift
       # Submit ready operations to the load balancer.
       ready_ops.each do |op|
         begin
-          @logger.info "Submitting operation to LBaaS: #{op}."
+          @logger.info "Submitting operation to load balancer: #{op}."
           op.jobids = @lb_model.send op.type, *op.operands
           @logger.info "Got back jobids #{op.jobids.join ', '}."
 
@@ -440,12 +440,12 @@ module OpenShift
 
           # TODO: validate that status['requestBody'] is consistent with op.
 
-          @logger.info "LBaaS reports job #{id} completed."
+          @logger.info "Load balancer reports job #{id} completed."
           op.jobids.delete id
           reap_op_if_no_remaining_tasks op
         when 'FAILED'
-          @logger.warn "LBaaS reports job #{id} failed."
-          @logger.info "Following are the job details from LBaaS:\n" + status.pretty_inspect
+          @logger.warn "Load balancer reports job #{id} failed."
+          @logger.info "Following are the job details from the load balancer:\n" + status.pretty_inspect
           @logger.info "Cancelling associated operation and any operations that it blocks..."
 
           cancel_op op
@@ -460,7 +460,7 @@ module OpenShift
     # If a pool has been created or is being created in the load balancer, it will be in pools.
     def pools
       @pools ||= begin
-        @logger.info "Requesting list of pools from LBaaS..."
+        @logger.info "Requesting list of pools from load balancer..."
         Hash[@lb_model.get_pool_names.map {|pool_name| [pool_name, Pool.new(self, @lb_model, pool_name)]}]
       end
     end
@@ -468,7 +468,7 @@ module OpenShift
     # If a route is already created or is being created in the load balancer, it will be in routes.
     def routes
       @routes ||= begin
-        @logger.info "Requesting list of routing rules from LBaaS..."
+        @logger.info "Requesting list of routing rules from load balancer..."
         @lb_model.get_active_route_names
       end
     end
@@ -476,7 +476,7 @@ module OpenShift
     # If a monitor is already created or is being created in the load balancer, it will be in monitors.
     def monitors
       @monitors ||= begin
-        @logger.info "Requesting list of monitors from LBaaS..."
+        @logger.info "Requesting list of monitors from load balancer..."
         @lb_model.get_monitor_names
       end
     end

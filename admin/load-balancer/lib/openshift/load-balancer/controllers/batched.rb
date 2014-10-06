@@ -5,22 +5,20 @@ require 'openshift/load-balancer/models/load_balancer'
 
 module OpenShift
 
-  # == F5 Load Balancer Controller
+  # == Batched Load Balancer Controller
   #
-  # Represents the F5 load balancer for the OpenShift Enterprise
-  # installation.  On initalization, the object queries the configured
-  # F5 BIG-IP node for the configured pools and builds a table of Pool
-  # objects.
+  # Represents a load balancer for the OpenShift Enterprise installation.
+  # On initalization, the object queries the configured load balancer for
+  # the configured pools and builds a table of Pool objects.
   #
-  class F5BatchedLoadBalancerController < LoadBalancerController
+  class BatchedLoadBalancerController < LoadBalancerController
 
-    # == F5 Pool object
+    # == Pool object
     #
-    # Represents the F5 pool.  On initialization, the object queries F5
-    # BIG-IP using the F5LoadBalancerController object provided as bigip
-    # to obtain the members of the pool named by pool_name.  These pool
-    # members are stored in @members using one string of the form
-    # address:port to represent each pool member.
+    # Represents the pool.  On initialization, the object queries the load balancer
+    # using the LoadBalancerModel object provided as lb_model to obtain the members
+    # of the pool named by pool_name.  These pool members are stored in @members
+    # using one string of the form address:port to represent each pool member.
     #
     class Pool < LoadBalancerController::Pool
       def initialize lb_controller, lb_model, pool_name
@@ -28,9 +26,8 @@ module OpenShift
         @members = @lb_model.get_pool_members pool_name
       end
 
-      # Add a member to the object's internal list of members.  This
-      # method does not update F5; use the update method to send the
-      # updated list of pool members to F5 BIG-IP.
+      # Add a member to the object's internal list of members.  This method does not
+      # update the load balancer; use the update method to force an update.
       def add_member address, port
         member = address + ':' + port.to_s
         raise LBControllerException.new "Adding gear #{member} to pool #{@name}, of which the gear is already a member" if @members.include? member
@@ -39,9 +36,8 @@ module OpenShift
         @lb_controller.pending_add_member_ops.push pending unless @lb_controller.pending_delete_member_ops.delete pending
       end
 
-      # Remove a member from the object's internal list of members.
-      # This method does not update F5; use the update method to force
-      # an update.
+      # Remove a member from the object's internal list of members.  This method does
+      # not update the load balancer; use the update method to force an update.
       def delete_member address, port
         member = address + ':' + port.to_s
         raise LBControllerException.new "Deleting gear #{member} from pool #{@name}, of which the gear is not a member" unless @members.include? member

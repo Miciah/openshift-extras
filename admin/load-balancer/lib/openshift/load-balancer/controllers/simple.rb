@@ -5,21 +5,20 @@ require 'openshift/load-balancer/models/load_balancer'
 
 module OpenShift
 
-  # == Simple F5 Load Balancer Controller
+  # == Simple Load Balancer Controller
   #
-  # Represents the F5 load balancer for the OpenShift Enterprise
-  # installation.  On initalization, the object queries the configured
-  # F5 BIG-IP node for the configured pools and builds a table of Pool
-  # objects.
+  # Represents a load balancer for the OpenShift Enterprise installation.
+  # On initalization, the object queries the configured load balancer for
+  # the configured pools and builds a table of Pool objects.
   #
-  class F5LoadBalancerController < LoadBalancerController
+  class SimpleLoadBalancerController < LoadBalancerController
 
-    # == F5 Pool object
+    # == Pool object
     #
-    # Represents the F5 pool.  On initialization, the object queries F5 BIG-IP
-    # to obtain the members of the pool named by pool_name.  These pool members
-    # are stored in @members using one string of the form address:port to
-    # represent each pool member.
+    # Represents the pool.  On initialization, the object queries the load balancer
+    # to obtain the members of the pool named by pool_name.  These pool members are
+    # stored in @members using one string of the form address:port to represent each
+    # pool member.
     class Pool < LoadBalancerController::Pool
       def initialize lb_controller, lb_model, pool_name
         @lb_controller, @lb_model, @name = lb_controller, lb_model, pool_name
@@ -99,28 +98,28 @@ module OpenShift
 
     def pools
       @pools ||= begin
-        @logger.info "Requesting list of pools from F5..."
+        @logger.info "Requesting list of pools from load balancer..."
         Hash[@lb_model.get_pool_names.map {|pool_name| [pool_name, Pool.new(self, @lb_model, pool_name)]}]
       end
     end
 
     def routes
       @routes ||= begin
-        @logger.info "Requesting list of routing rules from F5..."
+        @logger.info "Requesting list of routing rules from load balancer..."
         @lb_model.get_route_names
       end
     end
 
     def active_routes
       @active_routes ||= begin
-        @logger.info "Requesting list of active routing rules from F5..."
+        @logger.info "Requesting list of active routing rules from load balancer..."
         @lb_model.get_active_route_names
       end
     end
 
     def monitors
       @monitors ||= begin
-        @logger.info "Requesting list of monitors from F5..."
+        @logger.info "Requesting list of monitors from load balancer..."
         @lb_model.get_monitor_names
       end
     end

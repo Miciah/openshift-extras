@@ -43,38 +43,38 @@ module OpenShift
       # @lb_controller_class.
       case cfg['LOAD_BALANCER'].downcase
       when 'nginx'
-        require 'openshift/load-balancer/controllers/f5'
+        require 'openshift/load-balancer/controllers/simple'
         require 'openshift/load-balancer/models/nginx'
 
         @lb_model_class = OpenShift::NginxLoadBalancerModel
-        @lb_controller_class = OpenShift::F5LoadBalancerController
+        @lb_controller_class = OpenShift::SimpleLoadBalancerController
       when 'f5'
-        require 'openshift/load-balancer/controllers/f5'
+        require 'openshift/load-balancer/controllers/simple'
         require 'openshift/load-balancer/models/f5-icontrol-rest'
 
         @lb_model_class = OpenShift::F5IControlRestLoadBalancerModel
-        @lb_controller_class = OpenShift::F5LoadBalancerController
+        @lb_controller_class = OpenShift::SimpleLoadBalancerController
       when 'f5_batched'
-        require 'openshift/load-balancer/controllers/f5_batched'
+        require 'openshift/load-balancer/controllers/batched'
         require 'openshift/load-balancer/models/f5-icontrol-rest'
 
         @lb_model_class = OpenShift::F5IControlRestLoadBalancerModel
-        @lb_controller_class = OpenShift::F5BatchedLoadBalancerController
+        @lb_controller_class = OpenShift::BatchedLoadBalancerController
       when 'lbaas'
         require 'openshift/load-balancer/models/lbaas'
-        require 'openshift/load-balancer/controllers/lbaas'
+        require 'openshift/load-balancer/controllers/asynchronous'
 
         @lb_model_class = OpenShift::LBaaSLoadBalancerModel
         @lb_controller_class = OpenShift::AsyncLoadBalancerController
       when 'dummy'
         require 'openshift/load-balancer/models/dummy'
-        require 'openshift/load-balancer/controllers/f5'
+        require 'openshift/load-balancer/controllers/simple'
 
         @lb_model_class = OpenShift::DummyLoadBalancerModel
-        @lb_controller_class = OpenShift::F5LoadBalancerController
+        @lb_controller_class = OpenShift::SimpleLoadBalancerController
       when 'dummy_async'
         require 'openshift/load-balancer/models/dummy'
-        require 'openshift/load-balancer/controllers/lbaas'
+        require 'openshift/load-balancer/controllers/asynchronous'
 
         @lb_model_class = OpenShift::DummyLoadBalancerModel
         @lb_controller_class = OpenShift::AsyncLoadBalancerController
