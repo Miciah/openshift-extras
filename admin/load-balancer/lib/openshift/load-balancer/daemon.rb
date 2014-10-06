@@ -209,23 +209,23 @@ module OpenShift
     end
 
     def generate_pool_name app_name, namespace
-      @pool_name_format.gsub /%./, '%a' => app_name, '%n' => namespace
+      @pool_name_format.gsub(/%./, '%a' => app_name, '%n' => namespace)
     end
 
     def generate_route_name app_name, namespace
-      @route_name_format.gsub /%./, '%a' => app_name, '%n' => namespace
+      @route_name_format.gsub(/%./, '%a' => app_name, '%n' => namespace)
     end
 
     def generate_monitor_name app_name, namespace
       return nil unless @monitor_name_format
 
-      @monitor_name_format.gsub /%./, '%a' => app_name, '%n' => namespace
+      @monitor_name_format.gsub(/%./, '%a' => app_name, '%n' => namespace)
     end
 
     def generate_monitor_path app_name, namespace
       return nil unless @monitor_path_format
 
-      @monitor_path_format.gsub /%./, '%a' => app_name, '%n' => namespace
+      @monitor_path_format.gsub(/%./, '%a' => app_name, '%n' => namespace)
     end
 
     def create_application app_name, namespace
