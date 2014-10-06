@@ -16,13 +16,16 @@ module OpenShift
 
       @confdir = cfg['NGINX_CONFDIR']
       @nginx_service = cfg['NGINX_SERVICE']
+
+      pool_name_format = cfg['POOL_NAME'] || 'pool_ose_%a_%n_80'
+      @pool_fname_regex = Regexp.new("\\A(#{pool_name_format.gsub(/%./, '.*')})\\.conf\\Z")
     end
 
     # get_pool_names :: [String]
     def get_pool_names
       pool_names = []
       Dir.entries(@confdir).each do |entry|
-        pool_names.push $1 if entry =~ /\Apool_(.*)\.conf\Z/
+        pool_names.push $1 if entry =~ @pool_fname_regex
       end
       pool_names
     end
@@ -30,11 +33,11 @@ module OpenShift
     def create_pool pool_name, monitor_name
       # Write an empty file rather than an empty "upstream" clause
       # because nginx doesn't like the latter.
-      File.write("#{@confdir}/pool_#{pool_name}.conf", '')
+      File.write("#{@confdir}/#{pool_name}.conf", '')
     end
 
     def delete_pools pool_names
-      File.unlink(*pool_names.map {|n| "#{@confdir}/pool_#{n}.conf"})
+      File.unlink(*pool_names.map {|n| "#{@confdir}/#{n}.conf"})
     end
 
     def get_route_names
@@ -161,7 +164,7 @@ module OpenShift
 
     def get_pool_members pool_name
       begin
-        fname = "#{@confdir}/pool_#{pool_name}.conf"
+        fname = "#{@confdir}/#{pool_name}.conf"
         members = []
         File.open(fname).each_line do |line|
           members.push $1 if line =~ /\A\s*server\s+(\S+)\s*;\Z/
@@ -184,7 +187,7 @@ module OpenShift
           str + backend_server_template.result(binding)
         end
 
-        fname = "#{@confdir}/pool_#{pool_name}.conf"
+        fname = "#{@confdir}/#{pool_name}.conf"
         File.write(fname, backend_template.result(binding))
       end
     end
@@ -201,7 +204,7 @@ module OpenShift
           map {|address, port| backend_server_template.result(binding)}.
           join
 
-        fname = "#{@confdir}/pool_#{pool_name}.conf"
+        fname = "#{@confdir}/#{pool_name}.conf"
         File.write(fname, backend_template.result(binding))
       end
     end
