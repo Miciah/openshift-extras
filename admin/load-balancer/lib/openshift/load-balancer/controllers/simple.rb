@@ -23,6 +23,7 @@ module OpenShift
       def initialize lb_controller, lb_model, pool_name
         @lb_controller, @lb_model, @name = lb_controller, lb_model, pool_name
         @members = @lb_model.get_pool_members pool_name
+        @aliases = @lb_model.get_pool_aliases pool_name
       end
 
       def add_member address, port
@@ -35,6 +36,16 @@ module OpenShift
         member = address + ':' + port.to_s
         @members.delete member
         @lb_model.delete_pool_member @name, address, port
+      end
+
+      def add_alias alias_str
+        @aliases.push alias_str
+        @lb_model.add_pool_alias @name, alias_str
+      end
+
+      def delete_alias alias_str
+        @aliases.delete alias_str
+        @lb_model.delete_pool_alias @name, alias_str
       end
     end
 

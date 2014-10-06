@@ -19,6 +19,8 @@ module OpenShift
 
       pool_name_format = cfg['POOL_NAME'] || 'pool_ose_%a_%n_80'
       @pool_fname_regex = Regexp.new("\\A(#{pool_name_format.gsub(/%./, '.*')})\\.conf\\Z")
+
+      @alias_fname_regex = Regexp.new("\\Aalias_(.*)\\.conf\\Z")
     end
 
     # get_pool_names :: [String]
@@ -209,6 +211,24 @@ module OpenShift
       end
     end
 
+    def get_pool_aliases pool_name
+      aliases = []
+      Dir.entries(@confdir).each do |entry|
+        aliases.push $1 if entry =~ @alias_fname_regex
+      end
+      aliases
+    end
+
+    def add_pool_alias pool_name, alias_str
+      frontend_alias_template = ERB.new(FRONTEND_ALIAS)
+      fname = "#{@confdir}/alias_#{alias_str}.conf"
+      File.write(fname, frontend_alias_template.result(binding))
+    end
+
+    def delete_pool_alias pool_name, alias_str
+      File.unlink("#{@confdir}/alias_#{alias_str}.conf")
+    end
+
     def update
       `service #{@nginx_service} reload`
     end
@@ -230,6 +250,15 @@ module OpenShift
     BACKEND = %q{
 upstream <%= pool_name %> {
  <%= servers %>
+}
+}
+
+    FRONTEND_ALIAS = %q{
+server {
+  server_name <%= alias_str %>;
+  location / {
+    proxy_pass http://<%= pool_name %>;
+  }
 }
 }
 

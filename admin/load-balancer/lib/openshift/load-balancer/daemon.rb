@@ -191,6 +191,10 @@ module OpenShift
           add_endpoint event[:app_name], event[:namespace], event[:public_address], event[:public_port]
         when :remove_public_endpoint
           remove_endpoint event[:app_name], event[:namespace], event[:public_address], event[:public_port]
+        when :add_alias
+          add_alias event[:app_name], event[:namespace], event[:alias]
+        when :remove_alias
+          remove_alias event[:app_name], event[:namespace], event[:alias]
         end
       rescue => e
         @logger.warn "Got an exception: #{e.message}"
@@ -285,6 +289,18 @@ module OpenShift
       pool_name = generate_pool_name app_name, namespace
       @logger.info "Deleting member #{gear_host}:#{gear_port} from pool #{pool_name}"
       @lb_controller.pools[pool_name].delete_member gear_host, gear_port.to_i
+    end
+
+    def add_alias app_name, namespace, alias_str
+      pool_name = generate_pool_name app_name, namespace
+      @logger.info "Adding new alias #{alias_str} to pool #{pool_name}"
+      @lb_controller.pools[pool_name].add_alias alias_str
+    end
+
+    def remove_alias app_name, namespace, alias_str
+      pool_name = generate_pool_name app_name, namespace
+      @logger.info "Deleting alias #{alias_str} from pool #{pool_name}"
+      @lb_controller.pools[pool_name].delete_alias alias_str
     end
 
   end

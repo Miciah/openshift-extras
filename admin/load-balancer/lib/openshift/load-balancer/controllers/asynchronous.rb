@@ -35,6 +35,7 @@ module OpenShift
         # array now.  If we are supposed to request members, leave @members nil
         # for now so that the members method will initialize it.
         @members = Array.new unless request_members
+        @aliases = @lb_model.get_pool_aliases pool_name
       end
 
       def members
@@ -78,6 +79,34 @@ module OpenShift
         @lb_controller.queue_op Operation.new(:delete_pool_member, [self.name, address, port.to_s]), @lb_controller.ops.select {|op| (op.type == :create_pool && op.operands[0] == self.name) || ([:add_pool_member, :delete_pool_member].include?(op.type) && op.operands[0] == self.name && op.operands[1] == address && op.operands[2] == port.to_s)}
 
         members.delete member
+      end
+
+      def add_alias alias_str
+        raise LBControllerException.new "Adding alias #{alias_str} to pool #{@name}, which already has the alias" if @aliases.include? alias_str
+
+        # :add_pool_alias blocks
+        # if the corresponding pool is being created,
+        # if the alias being added is the same as one that is being deleted, or
+        # if the alias being added is the same as one that is being added
+        #   (which can be the case if the same alias is being added,
+        #   deleted, and added again).
+        @lb_controller.queue_op Operation.new(:add_pool_alias, [self.name, alias_str]), @lb_controller.ops.select {|op| (op.type == :create_pool && op.operands[0] == self.name) || ([:add_pool_alias, :delete_pool_alias].include?(op.type) && op.operands[0] == self.name && op.operands[1] == alias_str)}
+
+        @aliases.push alias_str
+      end
+
+      def delete_alias alias_str
+        raise LBControllerException.new "Deleting non-existent alias #{alias_str} from pool #{@name}" unless @aliases.include? alias_str
+
+        # :delete_pool_alias blocks
+        # if the corresponding pool is being created,
+        # if the alias being deleted is the same as one that is being added, or
+        # if the alias being deleted is the same as one that is being deleted
+        #   (which can be the case if the same alias is being added,
+        #   deleted, added, and deleted again).
+        @lb_controller.queue_op Operation.new(:delete_pool_alias, [self.name, alias_str]), @lb_controller.ops.select {|op| (op.type == :create_pool && op.operands[0] == self.name) || ([:add_pool_alias, :delete_pool_alias].include?(op.type) && op.operands[0] == self.name && op.operands[1] == alias_str)}
+
+        @aliases.delete alias_str
       end
     end
 
@@ -276,8 +305,10 @@ module OpenShift
       # :delete_pool blocks
       # if the corresponding pool is being created,
       # if the corresponding route is being deleted,
-      # if members are being added to the pool, or
-      # if members are being deleted from the pool.
+      # if members are being added to the pool,
+      # if members are being deleted from the pool,
+      # if an alias is being added to the pool, or
+      # if an alias is being deleted from the pool.
       #
       # Hypothetically, it would cause a problem if we were trying to
       # delete a pool that is already being deleted, which can be the
@@ -291,8 +322,8 @@ module OpenShift
       # for :create_route and :add_pool_member.
       #
       # The pool is not depended upon on by any other objects besides
-      # routes and pool members 
-      queue_op Operation.new(:delete_pool, [pool_name]), @ops.select {|op| [:delete_route, :delete_pool_member, :create_pool].include?(op.type) && op.operands[0] == pool_name}
+      # routes, pool members, and pool aliases.
+      queue_op Operation.new(:delete_pool, [pool_name]), @ops.select {|op| [:delete_route, :delete_pool_member, :delete_pool_alias, :create_pool].include?(op.type) && op.operands[0] == pool_name}
 
       pools.delete pool_name
     end

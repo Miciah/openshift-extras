@@ -188,6 +188,27 @@ argvs.each do |argv|
       puts "Deleting pool member #{argv[0]} from pool #{argv[1]}."
       lb.pools[argv[0]].delete_member *argv[1].split(':')
 
+    when 'list-pool-aliases'
+      raise ArgumentError.new "Requires an alias name." unless 1 == argv.length
+      puts "Listing aliases for pool #{argv[0]}."
+      pool_name = argv[0]
+      aliases = lb.pools[pool_name].get_aliases
+      if aliases.count > 0
+        puts "pool #{pool_name} has #{aliases.count} aliases:\n" + aliases.map {|m| "  "+m+"\n"}.join
+      else
+        puts "pool #{pool_name} has 0 aliases.\n"
+      end
+
+    when 'add-alias'
+      raise ArgumentError.new "Requires a pool name and an alias." unless 2 == argv.length
+      puts "Adding alias #{argv[1]} for pool #{argv[0]}."
+      lb.pools[argv[0]].add_alias argv[1]
+
+    when 'delete-alias'
+      raise ArgumentError.new "Requires a pool name and an alias." unless 2 == argv.length
+      puts "Deleting alias #{argv[0]} from pool #{argv[1]}."
+      lb.pools[argv[0]].delete_alias argv[1]
+
     else
       raise ArgumentError.new "Usage: #{$0} {list-pools|add-pool <name> [<monitor-name>]|delete-pool <name>|list-routes|add-route <pool> <name> <path>|delete-route <pool> <route_name>|list-monitors|create-monitor <name> <path> <up-code>|delete-monitor <name>list-pool-members <pool>|add-pool-member <pool> <host>:<port>|delete-pool-member <pool> <host>:<port>}"
     end

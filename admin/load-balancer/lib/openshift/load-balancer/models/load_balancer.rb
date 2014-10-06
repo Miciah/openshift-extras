@@ -137,6 +137,18 @@ module OpenShift
       end.flatten 2
     end
 
+    # get_pool_aliases :: String -> [String]
+    def get_pool_aliases pool_name
+    end
+
+    # add_pool_alias :: String, String -> undefined
+    def add_pool_alias pool_name, alias_str
+    end
+
+    # delete_pool_alias :: String, String -> undefined
+    def delete_pool_alias pool_name, alias_str
+    end
+
     # get_job_status :: String -> Object
     # This is only needed if the model is being used with
     # AsyncLoadBalancerController.

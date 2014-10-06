@@ -24,6 +24,7 @@ module OpenShift
       def initialize lb_controller, lb_model, pool_name
         @lb_controller, @lb_model, @name = lb_controller, lb_model, pool_name
         @members = @lb_model.get_pool_members pool_name
+        @aliases = @lb_model.get_pool_aliases pool_name
       end
 
       # Add a member to the object's internal list of members.  This method does not
@@ -44,6 +45,18 @@ module OpenShift
         @members.delete member
         pending = [self.name, [address, port.to_s]]
         @lb_controller.pending_delete_member_ops.push pending unless @lb_controller.pending_add_member_ops.delete pending
+      end
+
+      def add_alias alias_str
+        raise LBControllerException.new "Adding alias #{alias_str} to pool #{@name}, which already has the alias" if @aliases.include? alias_str
+        @aliases.push alias_str
+        @lb_model.add_pool_alias @name, alias_str
+      end
+
+      def delete_alias alias_str
+        raise LBControllerException.new "Deleting non-existent alias #{alias_str} from pool #{@name}" unless @aliases.include? alias_str
+        @aliases.delete alias_str
+        @lb_model.delete_pool_alias @name, alias_str
       end
     end
 

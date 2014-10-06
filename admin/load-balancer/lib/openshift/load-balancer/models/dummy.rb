@@ -90,6 +90,21 @@ module OpenShift
       [] # If using AsyncLoadBalancerController, return an array of jobids.
     end
 
+    def get_pool_aliases
+      @logger.debug "get aliases of pool #{pool_name}"
+      [] # Return an array of String representing pool aliases.
+    end
+
+    def add_pool_alias pool_name, alias_str
+      @logger.debug "add alias #{alias_str} to pool #{pool_name}"
+      [] # If using AsyncLoadBalancerController, return an array of jobids.
+    end
+
+    def delete_pool_alias pool_name, alias_str
+      @logger.debug "delete alias #{alias_str} from pool #{pool_name}"
+      [] # If using AsyncLoadBalancerController, return an array of jobids.
+    end
+
     def get_job_status id
       @logger.debug "return status of job #{id}"
       "some JSON"
