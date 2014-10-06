@@ -11,6 +11,14 @@ module OpenShift
   #
   class F5IControlRestLoadBalancerModel < LoadBalancerModel
 
+    def read_config cfgfile
+      cfg = ParseConfig.new(cfgfile)
+
+      @host = cfg['BIGIP_HOST'] || '127.0.0.1'
+      @username = cfg['BIGIP_USERNAME'] || 'admin'
+      @password = cfg['BIGIP_PASSWORD'] || 'passwd'
+    end
+
     # Send a REST request to the given URL and return the response.
     # rest_request :: Hash -> Net::HTTPResponse
     def rest_request options
@@ -165,8 +173,12 @@ module OpenShift
       delete(url: "https://#{@host}/mgmt/tm/ltm/pool/#{pool_name}/members/#{address + ':' + port.to_s}")
     end
 
-    def initialize host, username, password, logger, cfgfile
-      @host, @username, @password, @logger = host, username, password, logger
+    def initialize logger, cfgfile
+      @logger = logger
+
+      @logger.info 'Initializing F5 iControl REST interface model...'
+
+      read_config cfgfile
 
       # TODO: Create the openshift_applications policy if it does not
       # already exist.  The create_route and delete_route methods add

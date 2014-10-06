@@ -56,10 +56,6 @@ module OpenShift
     def read_config cfgfile
       cfg = ParseConfig.new(cfgfile)
 
-      @bigip_host = cfg['BIGIP_HOST'] || '127.0.0.1'
-      @bigip_username = cfg['BIGIP_USERNAME'] || 'admin'
-      @bigip_password = cfg['BIGIP_PASSWORD'] || 'passwd'
-
       @virtual_server_name = cfg['VIRTUAL_SERVER']
     end
 
@@ -127,13 +123,14 @@ module OpenShift
     end
 
     def initialize lb_model_class, logger, cfgfile
-      read_config cfgfile
-
       @logger = logger
 
-      @logger.info "Connecting to F5 BIG-IP at host #{@bigip_host}..."
-      @lb_model = lb_model_class.new @bigip_host, @bigip_username, @bigip_password, @logger, cfgfile
-      @lb_model.authenticate @bigip_host, @bigip_username, @bigip_password
+      @logger.info 'Initializing batched controller...'
+
+      read_config cfgfile
+
+      @lb_model = lb_model_class.new @logger, cfgfile
+      @lb_model.authenticate
 
       @pools = Hash[@lb_model.get_pool_names.map {|pool_name| [pool_name, Pool.new(self, @lb_model, pool_name)]}]
       @routes = @lb_model.get_route_names

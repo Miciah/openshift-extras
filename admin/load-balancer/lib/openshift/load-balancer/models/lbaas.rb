@@ -11,6 +11,19 @@ module OpenShift
   # purpose is to hide REST calls behind a more convenient interface.
   class LBaaSLoadBalancerModel < LoadBalancerModel
 
+    def read_config cfgfile
+      cfg = ParseConfig.new(cfgfile)
+
+      @host = cfg['LBAAS_HOST'] || '127.0.0.1'
+      @tenant = cfg['LBAAS_TENANT'] || 'openshift'
+      @timeout = cfg['LBAAS_TIMEOUT'] || '60'
+      @open_timeout = cfg['LBAAS_OPEN_TIMEOUT'] || '30'
+      @keystone_host = cfg['LBAAS_KEYSTONE_HOST'] || @lbaas_host
+      @keystone_username = cfg['LBAAS_KEYSTONE_USERNAME'] || 'admin'
+      @keystone_password = cfg['LBAAS_KEYSTONE_PASSWORD'] || 'passwd'
+      @keystone_tenant = cfg['LBAAS_KEYSTONE_TENANT'] || 'lbms'
+    end
+
     # Get the standard HTTP headers for LBaaS REST call.
     # lbaas_headers :: String
     def lbaas_headers
@@ -253,29 +266,25 @@ module OpenShift
     def maybe_reauthenticate
       if @keystone_token_expiration < Time.now + 2*@timeout
         @logger.info "Permanent token will expire soon.  Re-authenticating..."
-        authenticate @keystone_host, @keystone_username, @keystone_password, @keystone_tenant
+        authenticate
       end
     end
 
     # Returns String representing the keystone token and sets @keystone_token to
     # the same.  This method must be called before the others, which use
     # @keystone_token.
-    def authenticate keystone_host, keystone_username, keystone_password, keystone_tenant
-      # Save the keystone information for the maybe_reauthenticate
-      # method's use.
-      @keystone_host, @keystone_username, @keystone_password, @keystone_tenant = keystone_host, keystone_username, keystone_password, keystone_tenant
-
+    def authenticate
       # Be sure not to have a token saved so as not to send it when
       # requesting the temporary token.
       @keystone_token = nil
 
       @logger.info "Requesting temporary token from keystone..."
-      response = post("http://#{keystone_host}/v2.0/tokens",
+      response = post("http://#{@keystone_host}/v2.0/tokens",
                       {
                         :auth => {
                           :passwordCredentials => {
-                            :username => keystone_username,
-                            :password => keystone_password
+                            :username => @keystone_username,
+                            :password => @keystone_password
                           }
                         }
                       }.to_json)
@@ -285,21 +294,21 @@ module OpenShift
       @logger.info "Got temporary token: #{@keystone_token}"
 
       @logger.info "Requesting list of keystone tenants..."
-      response = get "http://#{keystone_host}/v2.0/tenants"
+      response = get "http://#{@keystone_host}/v2.0/tenants"
       raise LBModelException.new "Expected HTTP 200 but got #{response.code} instead" unless response.code == 200
 
       tenants = JSON.parse(response)['tenants'] or raise LBModelException.new "Error getting list of tenants from keystone"
-      tenant = tenants.find {|t| t['name'] == keystone_tenant} or raise LBModelException.new "Keystone tenant not found: #{keystone_tenant}"
-      tenant_id = tenant['id'] or raise LBModelException.new "Could not find tenantId for keystone tenant: #{keystone_tenant}"
+      tenant = tenants.find {|t| t['name'] == @keystone_tenant} or raise LBModelException.new "Keystone tenant not found: #{@keystone_tenant}"
+      tenant_id = tenant['id'] or raise LBModelException.new "Could not find tenantId for keystone tenant: #{@keystone_tenant}"
 
       @logger.info "Requesting permanent token from keystone..."
-      response = post("http://#{keystone_host}/v2.0/tokens",
+      response = post("http://#{@keystone_host}/v2.0/tokens",
                       {
                         :auth => {
                           :project => 'lbms',
                           :passwordCredentials => {
-                            :username => keystone_username,
-                            :password => keystone_password
+                            :username => @keystone_username,
+                            :password => @keystone_password
                           },
                           :tenantId => tenant_id
                         }
@@ -312,8 +321,12 @@ module OpenShift
       @keystone_token
     end
 
-    def initialize host, tenant, timeout, open_timeout, logger, cfgfile
-      @host, @tenant, @timeout, @open_timeout, @logger = host, tenant, timeout, open_timeout, logger
+    def initialize logger, cfgfile
+      @logger = logger
+
+      @logger.info 'Initializing LBaaS model...'
+
+      read_config cfgfile
     end
 
   end

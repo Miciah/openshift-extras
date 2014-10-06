@@ -10,6 +10,14 @@ module OpenShift
   #
   class F5IControlSoapLoadBalancerModel < LoadBalancerModel
 
+    def read_config cfgfile
+      cfg = ParseConfig.new(cfgfile)
+
+      @host = cfg['BIGIP_HOST'] || '127.0.0.1'
+      @username = cfg['BIGIP_USERNAME'] || 'admin'
+      @password = cfg['BIGIP_PASSWORD'] || 'passwd'
+    end
+
     def get_pool_names
       @bigip['LocalLB.Pool'].get_list.map {|pool| pool[8..-1]}
     end
@@ -108,13 +116,19 @@ module OpenShift
       @bigip['LocalLB.Pool'].remove_member pool_names.map {|pool| "/Common/#{pool}"}, member_lists.map {|members| members.map {|address,port| { 'address' => address, 'port' => port }}}
     end
 
-    def authenticate host=@host, user=@user, passwd=@passwd
-      @bigip = F5::IControl.new(host, user, passwd,
+    def authenticate
+      @logger.info "Authenticating with keystone at host #{@lbaas_keystone_host}..."
+
+      @bigip = F5::IControl.new(@host, @user, @passwd,
                                 ['System.Session', 'LocalLB.Pool', 'LocalLB.VirtualServer', 'LocalLB.ProfileHttpClass', 'LocalLB.Monitor']).get_interfaces
     end
 
-    def initialize host, user, passwd, logger, cfgfile
-      @host, @user, @passwd, @logger = host, user, passwd, logger
+    def initialize logger, cfgfile
+      @logger = logger
+
+      @logger.info 'Initializing F5 iControl SOAP interface model...'
+
+      read_config cfgfile
     end
 
   end

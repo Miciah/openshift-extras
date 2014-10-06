@@ -143,11 +143,11 @@ module OpenShift
     def get_job_status id
     end
 
-    def authenticate host=@host, user=@user, passwd=@passwd
+    def authenticate
     end
 
-    def initialize host=nil, user=nil, passwd=nil, cfgfile=nil
-      @host, @user, @passwd, @cfgfile = host, user, passwd, cfgfile
+    def initialize cfgfile=nil
+      @cfgfile = cfgfile
     end
 
   end

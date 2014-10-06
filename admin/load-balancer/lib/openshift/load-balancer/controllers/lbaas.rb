@@ -147,15 +147,6 @@ module OpenShift
     def read_config cfgfile
       cfg = ParseConfig.new(cfgfile)
 
-      @lbaas_host = cfg['LBAAS_HOST'] || '127.0.0.1'
-      @lbaas_tenant = cfg['LBAAS_TENANT'] || 'openshift'
-      @lbaas_timeout = cfg['LBAAS_TIMEOUT'] || '60'
-      @lbaas_open_timeout = cfg['LBAAS_OPEN_TIMEOUT'] || '30'
-      @lbaas_keystone_host = cfg['LBAAS_KEYSTONE_HOST'] || @lbaas_host
-      @lbaas_keystone_username = cfg['LBAAS_KEYSTONE_USERNAME'] || 'admin'
-      @lbaas_keystone_password = cfg['LBAAS_KEYSTONE_PASSWORD'] || 'passwd'
-      @lbaas_keystone_tenant = cfg['LBAAS_KEYSTONE_TENANT'] || 'lbms'
-
       @virtual_server_name = cfg['VIRTUAL_SERVER']
     end
 
@@ -491,14 +482,15 @@ module OpenShift
     end
 
     def initialize lb_model_class, logger, cfgfile
-      read_config cfgfile
-
       @logger = logger
 
-      @lb_model = lb_model_class.new @lbaas_host, @lbaas_tenant, @lbaas_timeout.to_i, @lbaas_open_timeout.to_i, @logger, cfgfile
+      @logger.info 'Initializing asynchronous controller...'
 
-      @logger.info "Authenticating with keystone at host #{@lbaas_keystone_host}..."
-      @lb_model.authenticate @lbaas_keystone_host, @lbaas_keystone_username, @lbaas_keystone_password, @lbaas_keystone_tenant
+      read_config cfgfile
+
+      @lb_model = lb_model_class.new @logger, cfgfile
+
+      @lb_model.authenticate
 
       # If an Operation has been created but not yet completed (whether
       # because it is blocked on one or more other Operations, because

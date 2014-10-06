@@ -95,14 +95,14 @@ module OpenShift
       "some JSON"
     end
 
-    def authenticate host=@host, user=@user, passwd=@passwd
+    def authenticate
       @logger.debug "do some authentication stuff"
 
       @foo = "some temporary token or connection object"
     end
 
-    def initialize host, user, passwd, logger, cfgfile
-      @host, @user, @passwd, @logger = host, user, passwd, logger
+    def initialize logger, cfgfile
+      @logger = logger
       @logger.debug "do initialization stuff"
     end
 

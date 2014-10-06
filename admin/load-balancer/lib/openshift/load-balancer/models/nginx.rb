@@ -210,10 +210,12 @@ module OpenShift
       `service #{@nginx_service} reload`
     end
 
-    def initialize host, username, password, logger, cfgfile
-      read_config cfgfile
+    def initialize logger, cfgfile
+      @logger = logger
 
-      @host, @username, @password, @logger = host, username, password, logger
+      @logger.info 'Initializing nginx model...'
+
+      read_config cfgfile
     end
 
     # ERB Templates
