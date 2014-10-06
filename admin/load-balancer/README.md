@@ -40,7 +40,7 @@ least one VIP.  The daemon will automatically create pools and associated
 local-traffic policy rules, add these profiles to the virtual server, add
 members to the pools, delete members from the pools, and delete empty pools and
 unused policy rules when appropriate.  Your virtual server must be named
-"ose-vlan." The daemon will name the pools after applications following the
+"ose-vlan". The daemon will name the pools after applications following the
 template "/Common/ose-#{app_name}-#{namespace}" and create policy rules that
 redirect "/#{app_name}" to pools comprising the gears of the named application.
 The policy rules bypass applications' HAProxy instances and instead route to the
@@ -89,17 +89,17 @@ Set the `MONITOR_NAME` to the name of the monitor you would like to use, and set
 unspecified to disable the monitor functionality.
 
 Set `MONITOR_UP_CODE` to the code that indicates that a pool member is up, or
-leave `MONITOR_UP_CODE` unset to use the default value of "1."
+leave `MONITOR_UP_CODE` unset to use the default value of "1".
 
 Set `MONITOR_TYPE` to either "http-ecv" or "https-ecv" depending on whether you
 want to use HTTP or HTTPS for the monitor, leave `MONITOR_TYPE` unset to use the
-default value of "http-ecv."
+default value of "http-ecv".
 
 Set `MONITOR_INTERVAL` to the interval at which the monitor will send requests,
-or leave `MONITOR_INTERVAL` unset to use the default value of "10."
+or leave `MONITOR_INTERVAL` unset to use the default value of "10".
 
 Set `MONITOR_TIMEOUT` to the monitor's timeout for its requests, or leave
-`MONITOR_TIMEOUT` unset to use the default value of "5."
+`MONITOR_TIMEOUT` unset to use the default value of "5".
 
 As with `POOL_NAME` and `ROUTE_NAME`, `MONITOR_NAME` and `MONITOR_PATH` both can
 contain `%a` and `%n` formats, which are expanded the same way.  Unlike
