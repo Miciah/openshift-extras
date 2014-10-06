@@ -15,11 +15,12 @@ The daemon must be configured to connect to ActiveMQ. Edit
 appropriate credentials, address, and ActiveMQ destination (topic or
 queue).
 
-Exactly one load-balancer module must be enabled.  A module for F5 BIG-IP LTM,
-a module for an load-balancer implementing the LBaaS REST API, and a module that
+Exactly one load-balancer module must be enabled.  A module for F5 BIG-IP LTM, a
+module for an load-balancer implementing the LBaaS REST API, and a module that
 configures nginx as a reverse proxy are included in this repository.  Edit
-`/etc/openshift/load-balancer.conf` to either "f5" or "lbaas" and then following
-the appropriate module-specific configuration described below.
+`/etc/openshift/load-balancer.conf` to set the `LOAD_BALANCER` setting to "f5",
+"lbaas", or "nginx" and then following the appropriate module-specific
+configuration described below.
 
 For testing purposes, a dummy model, which merely prints actions that
 a normal model performs rather than performing actions itself, is also
