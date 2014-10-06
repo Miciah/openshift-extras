@@ -34,9 +34,11 @@ module OpenShift
     end
 
     def get_route_names
+      []
     end
 
     def get_active_route_names
+      []
     end
 
     # create_route :: String, String, String -> undefined
@@ -86,6 +88,7 @@ module OpenShift
 
     # get_monitor_names :: [String]
     def get_monitor_names
+      []
     end
 
     # create_monitor :: String, String, String, String, String, String -> undefined
@@ -98,10 +101,12 @@ module OpenShift
 
     # get_pool_members :: String -> [String]
     def get_pool_members pool_name
+      []
     end
 
     # get_active_pool_members :: String -> [String]
     def get_active_pool_members pool_name
+      []
     end
 
     # add_pool_member :: String, String, Integer -> undefined
@@ -139,6 +144,7 @@ module OpenShift
 
     # get_pool_aliases :: String -> [String]
     def get_pool_aliases pool_name
+      []
     end
 
     # add_pool_alias :: String, String -> undefined
