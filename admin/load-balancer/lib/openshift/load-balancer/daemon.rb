@@ -187,10 +187,10 @@ module OpenShift
           create_application event[:app_name], event[:namespace]
         when :delete_application
           delete_application event[:app_name], event[:namespace]
-        when :add_gear
-          add_gear event[:app_name], event[:namespace], event[:public_address], event[:public_port]
-        when :delete_gear
-          remove_gear event[:app_name], event[:namespace], event[:public_address], event[:public_port]
+        when :add_public_endpoint
+          add_endpoint event[:app_name], event[:namespace], event[:public_address], event[:public_port]
+        when :remove_public_endpoint
+          remove_endpoint event[:app_name], event[:namespace], event[:public_address], event[:public_port]
         end
       rescue => e
         @logger.warn "Got an exception: #{e.message}"
@@ -275,13 +275,13 @@ module OpenShift
       end
     end
 
-    def add_gear app_name, namespace, gear_host, gear_port
+    def add_endpoint app_name, namespace, gear_host, gear_port
       pool_name = generate_pool_name app_name, namespace
       @logger.info "Adding new member #{gear_host}:#{gear_port} to pool #{pool_name}"
       @lb_controller.pools[pool_name].add_member gear_host, gear_port.to_i
     end
 
-    def remove_gear app_name, namespace, gear_host, gear_port
+    def remove_endpoint app_name, namespace, gear_host, gear_port
       pool_name = generate_pool_name app_name, namespace
       @logger.info "Deleting member #{gear_host}:#{gear_port} from pool #{pool_name}"
       @lb_controller.pools[pool_name].delete_member gear_host, gear_port.to_i
