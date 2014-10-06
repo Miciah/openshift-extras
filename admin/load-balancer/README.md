@@ -3,22 +3,22 @@ Configuring ActiveMQ
 
 The ActiveMQ node routing plug-in must be enabled so that it sends routing
 updates that the programs in this directory can read.  Install
-rubygem-openshift-origin-routing-activemq and see its included README.md for
+`rubygem-openshift-origin-routing-activemq` and see its included `README.md` for
 instructions.
 
 Configuring the Daemon
 ----------------------
 
 The daemon must be configured to connect to ActiveMQ. Edit
-/etc/openshift/load-balancer.conf and set ACTIVEMQ_USER,
-ACTIVEMQ_PASSWORD, ACTIVEMQ_HOST, and ACTIVEMQ_DESTINATION to the
+`/etc/openshift/load-balancer.conf` and set `ACTIVEMQ_USER`,
+`ACTIVEMQ_PASSWORD`, `ACTIVEMQ_HOST`, and `ACTIVEMQ_DESTINATION` to the
 appropriate credentials, address, and ActiveMQ destination (topic or
 queue).
 
 Exactly one load-balancer module must be enabled.  A module for F5 BIG-IP LTM,
 a module for an load-balancer implementing the LBaaS REST API, and a module that
 configures nginx as a reverse proxy are included in this repository.  Edit
-/etc/openshift/load-balancer.conf to either "f5" or "lbaas" and then following
+`/etc/openshift/load-balancer.conf` to either "f5" or "lbaas" and then following
 the appropriate module-specific configuration described below.
 
 For testing purposes, a dummy model, which merely prints actions that
@@ -31,8 +31,8 @@ controller.
 Using F5 BIG-IP LTM
 -------------------
 
-Edit /etc/openshift/load-balancer.conf to set the appropriate values for
-BIGIP_HOST, BIGIP_USERNAME, BIGIP_PASSWORD, and BIGIP_MONITOR to match
+Edit `/etc/openshift/load-balancer.conf` to set the appropriate values for
+`BIGIP_HOST`, `BIGIP_USERNAME`, `BIGIP_PASSWORD`, and `BIGIP_MONITOR` to match
 your F5 BIG-IP LTM configuration.
 
 F5 BIG-IP must be configured with a virtual server that has been assigned at
@@ -49,12 +49,11 @@ gears via the node's port-proxy.
 Using LBaaS
 -----------
 
-After enabling the LBaaS module as described in the section on
-configuring the daemon, edit /etc/openshift/load-balancer.conf to set
-the appropriate values for LBAAS_HOST, LBAAS_TENANT, LBAAS_TIMEOUT,
-LBAAS_OPEN_TIMEOUT, LBAAS_KEYSTONE_HOST, LBAAS_KEYSTONE_USERNAME,
-LBAAS_KEYSTONE_PASSWORD, and LBAAS_KEYSTONE_TENANT, to match your LBaaS
-configuration.
+After enabling the LBaaS module as described in the section on configuring the
+daemon, edit `/etc/openshift/load-balancer.conf` to set the appropriate values
+for `LBAAS_HOST`, `LBAAS_TENANT`, `LBAAS_TIMEOUT`, `LBAAS_OPEN_TIMEOUT`,
+`LBAAS_KEYSTONE_HOST`, `LBAAS_KEYSTONE_USERNAME`, `LBAAS_KEYSTONE_PASSWORD`, and
+`LBAAS_KEYSTONE_TENANT`, to match your LBaaS configuration.
 
 Using nginx
 -----------
@@ -69,50 +68,51 @@ daemon will reload the service specified by `NGINX_SERVICE`.
 
 Pool and Route Names
 --------------------
+
 By default, new pools will be created with the name
-"pool_ose_{appname}_{namespace}_80" while new routes will be created
-with the name "irule_ose_{appname}_{namespace}."  You can override these
-defaults by setting appropriate values for the POOL_NAME and ROUTE_NAME
-settings, respectively.  The values for these settings should contain
-the following formats so that each application gets its own uniquely
-named pool and routing rule: %a is expanded to the name of the
-application, and %n is expanded to the application's namespace.
+`pool_ose_{appname}_{namespace}_80` while new routes will be created with the
+name `irule_ose_{appname}_{namespace}.`  You can override these defaults by
+setting appropriate values for the `POOL_NAME` and `ROUTE_NAME` settings,
+respectively.  The values for these settings should contain the following
+formats so that each application gets its own uniquely named pool and routing
+rule: `%a` is expanded to the name of the application, and `%n` is expanded to
+the application's namespace.
 
 Monitors
 --------
+
 The F5 and LBaaS backends can add an existing monitor to newly created pools.
 The following settings control how these monitors are created.
 
-Set the MONITOR_NAME to the name of the monitor you would like to use, and set
-MONITOR_PATH to the pathname to use for the monitor, or leave either option
+Set the `MONITOR_NAME` to the name of the monitor you would like to use, and set
+`MONITOR_PATH` to the pathname to use for the monitor, or leave either option
 unspecified to disable the monitor functionality.
 
-Set MONITOR_UP_CODE to the code that indicates that a pool member is up,
-or leave MONITOR_UP_CODE unset to use the default value of "1."
+Set `MONITOR_UP_CODE` to the code that indicates that a pool member is up, or
+leave `MONITOR_UP_CODE` unset to use the default value of "1."
 
-Set MONITOR_TYPE to either "http-ecv" or "https-ecv" depending on
-whether you want to use HTTP or HTTPS for the monitor, leave
-MONITOR_TYPE unset to use the default value of "http-ecv."
+Set `MONITOR_TYPE` to either "http-ecv" or "https-ecv" depending on whether you
+want to use HTTP or HTTPS for the monitor, leave `MONITOR_TYPE` unset to use the
+default value of "http-ecv."
 
-Set MONITOR_INTERVAL to the interval at which the monitor will send
-requests, or leave MONITOR_INTERVAL unset to use the default value of
-"10."
+Set `MONITOR_INTERVAL` to the interval at which the monitor will send requests,
+or leave `MONITOR_INTERVAL` unset to use the default value of "10."
 
-Set MONITOR_TIMEOUT to the monitor's timeout for its requests, or leave
-MONITOR_TIMEOUT unset to use the default value of "5."
+Set `MONITOR_TIMEOUT` to the monitor's timeout for its requests, or leave
+`MONITOR_TIMEOUT` unset to use the default value of "5."
 
-As with POOL_NAME and ROUTE_NAME, MONITOR_NAME and MONITOR_PATH both can
-contain %a and %n formats, which are expanded the same way.  Unlike
-POOL_NAME and ROUTE_NAME, you may or may not want to re-use the same
-monitor for different applications.  The daemon will automatically
-create a new monitor when MONITOR_NAME expands a string that does not
-match the name of any existing monitor.
+As with `POOL_NAME` and `ROUTE_NAME`, `MONITOR_NAME` and `MONITOR_PATH` both can
+contain `%a` and `%n` formats, which are expanded the same way.  Unlike
+`POOL_NAME` and `ROUTE_NAME`, you may or may not want to re-use the same monitor
+for different applications.  The daemon will automatically create a new monitor
+when `MONITOR_NAME` expands a string that does not match the name of any
+existing monitor.
 
-It is expected that for each pool member, the load balancer will send
-a GET request to the resource identified on that host by the value of
-MONITOR_PATH for the associated monitor, and that the host will respond
-with the value of MONITOR_UP_CODE if the host is up or some other
-response if the host is not up.
+It is expected that for each pool member, the load balancer will send a `GET`
+request to the resource identified on that host by the value of `MONITOR_PATH`
+for the associated monitor, and that the host will respond with the value of
+`MONITOR_UP_CODE` if the host is up or some other response if the host is not
+up.
 
 ##Notice of Export Control Law
 
