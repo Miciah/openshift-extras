@@ -1009,6 +1009,10 @@ install_broker_pkgs()
   pkgs="$pkgs openshift-origin-console"
 
 
+  # We use semanage in configure_selinux_policy_on_broker, so we need to
+  # install policycoreutils-python.
+  pkgs="$pkgs policycoreutils-python"
+
   yum_install_or_exit $pkgs
 }
 
@@ -1020,8 +1024,8 @@ install_node_pkgs()
   pkgs="$pkgs openshift-origin-node-util"
   pkgs="$pkgs mcollective openshift-origin-msg-node-mcollective"
 
-  # We use semanage in this script, so we need to install
-  # policycoreutils-python.
+  # We use semanage in configure_selinux_policy_on_node, so we need to
+  # install policycoreutils-python.
   pkgs="$pkgs policycoreutils-python"
 
   yum_install_or_exit -y $pkgs
